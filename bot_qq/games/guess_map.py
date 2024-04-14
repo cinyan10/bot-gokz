@@ -12,6 +12,7 @@ from botpy.message import GroupMessage
 from bot_qq.qqutils.general import send, send_img
 from utils.configs.gokz import MAP_TIERS
 from utils.globalapi.gokz import get_maps_in_tier_range
+from botpy import logger
 
 
 class GuessMap:
@@ -71,7 +72,7 @@ class GuessMap:
         self.map_name = random.choice(available_maps)
         self.recent_maps.append(self.map_name)
         self.recent_maps = self.recent_maps[-15:]
-        print(f"开始猜图:", self.map_name)
+        logger.info(f"开始猜图: {self.map_name}")
 
         self.map_prefix = self.map_name.split("_")[0]
         self.map_realm = self.map_name.split("_", 1)[1]

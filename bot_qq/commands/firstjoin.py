@@ -1,17 +1,17 @@
 from botpy.message import GroupMessage
 
-from bot_qq.qqutils.database.users import get_user_info
 from bot_qq.qqutils.ext import Command
 from bot_qq.qqutils.general import check_params, send, user_info_text, send_img
 from bot_qq.qqutils.ip import query_ip_location
 from bot_qq.qqutils.text import borders
 from utils.database.firstjoin import get_firstjoin_data, find_player
-from utils.steam.server_rcon import rcon_all_servers
 from utils.steam.steam_user import get_steam_avatar_localfile_url
+from botpy import logger
 
 
 @Command("开河")
 async def kaihe(message, params):
+    logger.info("正在执行 /开河")
     params = await check_params(message, params)
     if not params:
         return
@@ -44,6 +44,8 @@ ISP:        {ip_data['isp']}
 @Command("find")
 async def find(message, params):
     steamids = find_player(params[0])
+    logger.info(f"正在执行 /find {steamids}")
+
     content = ""
     if steamids:
         for steamid in steamids:
@@ -56,25 +58,28 @@ async def find(message, params):
 
 @Command("wl", "白名单")
 async def whitelist(message: GroupMessage, params=None):
-    steamid = get_user_info(message.author.member_openid)["steamid"]
+    await send(message, "服务器暂不需要白名单")
 
-    if not steamid:
-        await send(
-            message,
-            '请先 "/bind <steamid | url>", 支持 SteamID, SteamID64 及 Steam主页链接',
-            st=False,
-        )
-        return
+    # steamid = get_user_info(message.author.member_openid)["steamid"]
+    # logger.info(f"正在执行 /wl {steamid}")
 
-    rs = await rcon_all_servers("sm_whitelist_add", f'"{steamid}"')
-    for r in rs:
-        if r:
-            if "successfully added to" in r:
-                await send(message, "✅ 白名单添加成功")
-                await rcon_all_servers("sm_whitelist_reload")
-                return
-            else:
-                await send(message, "❌ 白名单添加失败")
+    # if not steamid:
+    #     await send(
+    #         message,
+    #         '请先 "/bind <steamid | url>", 支持 SteamID, SteamID64 及 Steam主页链接',
+    #         st=False,
+    #     )
+    #     return
+    #
+    # rs = await rcon_all_servers("sm_whitelist_add", f'"{steamid}"')
+    # for r in rs:
+    #     if r:
+    #         if "successfully added to" in r:
+    #             await send(message, "✅ 白名单添加成功")
+    #             await rcon_all_servers("sm_whitelist_reload")
+    #             return
+    #         else:
+    #             await send(message, "❌ 白名单添加失败")
 
 
 @Command("info")
@@ -89,4 +94,4 @@ async def info(message: GroupMessage, params):
     try:
         await send_img(message, get_steam_avatar_localfile_url(steamid), msg_seq=1)
     finally:
-        await send(message, content, msg_seq=2)
+        await send(message, content, msg_seq=2, st=True)

@@ -91,5 +91,4 @@ def get_rank_name(points):
 
 
 if __name__ == "__main__":
-
     pass

@@ -195,6 +195,7 @@ def fetch_personal_recent(steamid64, mode='kzt'):
 
     return sorted_data[0]
 
+
 def fetch_personal_best(steamid64, map_name, mode='kzt', has_tp=True):
     steamid64 = convert_steamid(steamid64, 2)
     mode = format_kzmode(mode)
@@ -206,6 +207,7 @@ def fetch_personal_best(steamid64, map_name, mode='kzt', has_tp=True):
     response.raise_for_status()
     data = response.json()
     return data[0]
+
 
 def fetch_world_record(map_name, mode='kzt', has_tp=True):
     mode = format_kzmode(mode)

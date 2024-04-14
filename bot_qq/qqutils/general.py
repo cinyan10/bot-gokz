@@ -80,7 +80,6 @@ def search_map(map_name, threshold=0.2) -> list:
 def user_info_text(steamid) -> str:
     steamid = convert_steamid(steamid, 0)
     steamid64 = convert_steamid(steamid, 64)
-    steamid32 = convert_steamid(steamid, 32)
 
     content = f"╔ {steamid}\n║ {steamid64}"
 
@@ -94,8 +93,12 @@ def user_info_text(steamid) -> str:
     lastseen = format_string_to_datetime(firstjoin_data["lastseen"]).strftime(
         "%Y-%m-%d %H:%M"
     )
-    playtime = get_mostactive_data(steamid)["total"]
-    hours, minutes, seconds = seconds_to_hms(playtime)
+
+    try:
+        playtime = get_mostactive_data(steamid)["total"]
+        hours, minutes, seconds = seconds_to_hms(playtime)
+    except KeyError:
+        hours, minutes, seconds = 0, 0, 0
 
     name = firstjoin_data["name"]
 

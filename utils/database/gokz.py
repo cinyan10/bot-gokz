@@ -14,11 +14,9 @@ def get_ljpb(steamid32, kz_mode, is_block_jump, jump_type=0) -> dict:
     cursor = None
 
     try:
-        # Connect to the database using the imported db_config
         connection = mysql.connector.connect(**DB_CONFIG)
         cursor = connection.cursor(dictionary=True)
 
-        # Define the SQL query to retrieve the best jump data
         query = """
         SELECT *
         FROM gokz.Jumpstats
@@ -30,7 +28,6 @@ def get_ljpb(steamid32, kz_mode, is_block_jump, jump_type=0) -> dict:
         LIMIT 1
         """
 
-        # Set is_block_jump to 1 if it is True, otherwise set it to 0
         is_block_jump_value = 1 if is_block_jump else 0
         mode = KZ_MODES.index(kz_mode)
         # Execute the SQL query with the provided parameters

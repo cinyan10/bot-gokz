@@ -19,38 +19,38 @@ from utils.steam.steam import convert_steamid
 from utils.steam.steam_user import get_steam_avatar_localfile_url
 from bot_qq.qqutils.ext import Command
 from bot_qq.qqutils.general import check_params, send, search_map, send_img, send_voice
+from botpy import logger
 
 
-@Command("纯度", "purity")
+@Command('纯度', 'purity')
 async def purity(message, params):
     rs = await check_params(message, params)
     steamid = rs["steamid"]
     kz_mode = rs["kz_mode"]
-
-    content = "=======纯度测试=======\n"
+    logger.info(f"纯度查询: {steamid} {kz_mode}")
 
     data = fetch_personal_purity(steamid, kz_mode, exclusive=False)
     try:
         playtime = get_mostactive_data(steamid)["total"]
         hours, minutes, seconds = seconds_to_hms(playtime)
-    except Exception as e:
+    except KeyError:
         hours, minutes, seconds = 0, 0, 0
 
-    content += f"ID: {steamid}\n"
-    content += "玩家名称:".ljust(16, " ") + data["name"] + "\n"
-    content += "游戏模式:".ljust(16, " ") + kz_mode + "\n"
-    content += "游玩时间:".ljust(16, " ") + f"{hours}h {minutes}m {seconds}s" + "\n"
-
-    content += "仅 AXE GOKZ API".center(22, "-") + "\n"
-    content += "总地图数:".ljust(16, " ") + str(data["total"]) + "\n"
-    content += "本服完成:".ljust(16, " ") + str(data["count"]) + "\n"
-    content += "百分比:".ljust(18, " ") + "{:.2%}".format(data["percentage"]) + "\n"
-
-    content += "包含以前的API".center(22, "-") + "\n"
-    data = fetch_personal_purity(steamid, kz_mode, exclusive=True)
-    content += "总地图数:".ljust(16, " ") + str(data["total"]) + "\n"
-    content += "本服完成:".ljust(16, " ") + str(data["count"]) + "\n"
-    content += "百分比:".ljust(18, " ") + "{:.2%}".format(data["percentage"])
+    content = f"""
+=======纯度测试=======
+ID: {steamid}
+玩家名称:   {data["name"]}
+游戏模式:   {kz_mode}
+游玩时间:   {hours}h {minutes}m {seconds}s
+----仅 AXE GOKZ API----
+总地图数:   {data["total"]}
+本服完成:   {data["count"]}
+百分比:   　{"{:.2%}".format(data["percentage"])}
+------包含以前的API------
+总地图数:   {data["total"]}
+本服完成:   {data["count"]}
+百分比:　   {"{:.2%}".format(data["percentage"])}
+"""
 
     await send(message, content)
 
@@ -119,12 +119,10 @@ async def pr(message: GroupMessage, params):
     steamid = rs["steamid"]
     kz_mode = rs["kz_mode"]
 
-    print("steamid:", steamid)
-    print("kz_mode:", kz_mode)
-
     data = fetch_personal_recent(steamid, kz_mode)
 
-    content = f"""╔ 地图:　　{data['map_name']}
+    content = f"""
+╔ 地图:　　{data['map_name']}
 ║ 难度:　　T{MAP_TIERS[data['map_name']]}
 ║ 模式:　　{kz_mode}
 ║ 玩家:　　{data['player_name']} 

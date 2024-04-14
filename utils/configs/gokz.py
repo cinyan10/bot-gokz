@@ -9,6 +9,7 @@ JUMP_TYPE = [
     "lowpre bunnyhop",
     "lowpre weird jump",
 ]
+
 JUMPSTATS = [
     "Distance",
     "IsBlockJump",

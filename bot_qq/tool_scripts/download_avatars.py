@@ -27,6 +27,7 @@ def download_steam_avatars(players_steamid, save_path): # NOQA
                 except requests.exceptions.RequestException as e:
                     print(f'Error downloading avatar for {steam_id}: {e}')
 
+
 if __name__ == '__main__':
     players_steamid = get_all_players_steamid()  # 请替换为您要下载头像的玩家 SteamID
     save_path = '/www/wwwroot/fastdl.axekz.com/images/avatars/'  # 请指定保存头像的路径
