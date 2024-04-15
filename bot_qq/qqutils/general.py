@@ -11,65 +11,6 @@ from config import RESOURCE_URL
 from utils.configs.gokz import MAP_TIERS
 
 
-def my_format(
-    str, width, align, sep=" "
-):  # 定义函数接受三个参数：要输出的字符串(str)、总占用宽度（int）、对齐方式（str:l、r、c对应左右中）
-    sigle = 0
-    double = 0
-    for i in str:  # 统计单字宽和双字宽的数目
-        if len(i.encode("gb2312")) == 1:
-            sigle += 1
-        elif len(i.encode("gb2312")) == 2:
-            double += 1
-    if align == "l":
-        return str + (width * 2 - sigle - double * 2) * sep
-    elif align == "r":
-        return (width * 2 - sigle - double * 2) * sep + str
-    elif align == "c":
-        return (
-            int((width * 2 - sigle - double * 2) // 2) * sep
-            + str
-            + int(
-                (width * 2 - sigle - double * 2) - (width * 2 - sigle - double * 2) // 2
-            )
-            * sep
-        )
-
-
-def print_format(
-    string, width, fill="=", way="^", ed=""
-):  # 格式输出函数,默认格式填充用单空格,不换行。
-    try:
-        count = 0  # 长宽度中文字符数量
-        for word in string:  # 检测长宽度中文字符
-            if (word >= "\u4e00" and word <= "\u9fa5") or word in [
-                "；",
-                "：",
-                "，",
-                "（",
-                "）",
-                "！",
-                "？",
-                "——",
-                "……",
-                "、",
-                "》",
-                "《",
-            ]:
-                count += 1
-        width = width - count if width >= count else 0
-        print("{0:{1}{2}{3}}".format(string, fill, way, width), end=ed, flush=True)
-    except:
-        print("print_format函数参数输入错误！")
-
-
-def command(message: GroupMessage, cmd: str) -> list | None:
-    if message.content.strip().startswith(cmd):
-        return message.content.split(cmd)[1].strip().split(" ")
-    else:
-        return None
-
-
 def search_map(map_name, threshold=0.2) -> list:
     matches = difflib.get_close_matches(
         map_name, MAP_TIERS.keys(), n=5, cutoff=threshold
@@ -79,9 +20,10 @@ def search_map(map_name, threshold=0.2) -> list:
 
 def user_info_text(steamid) -> str:
     steamid = convert_steamid(steamid, 0)
+    steamid32 = convert_steamid(steamid, 32)
     steamid64 = convert_steamid(steamid, 64)
 
-    content = f"╔ {steamid}\n║ {steamid64}"
+    content = f"╔ {steamid}\n" f"║ {steamid64}\n" f"║ {steamid32}"
 
     firstjoin_data = get_firstjoin_data(steamid)
     if not firstjoin_data:
@@ -103,7 +45,7 @@ def user_info_text(steamid) -> str:
     name = firstjoin_data["name"]
 
     content += f"""
-║ 玩家名称:      {name}
+║ 玩家名称: {name}
 ║ 加入时间: {joindate}
 ║ 上次在线: {lastseen}
 ╚ 游玩时间: {hours}h {minutes}m {seconds}s
@@ -148,23 +90,6 @@ async def check_params(message: GroupMessage, params: str | list):
         )
 
     return rs
-
-
-async def steamid_getter(message: GroupMessage, steamid):
-    if steamid == "":
-        try:
-            steamid = get_user_info(message.author.member_openid)["steamid"]
-            return steamid
-        except:  # NOQA
-            await send(message, "未绑定steamid")
-            return None
-    else:
-        try:
-            steamid = convert_steamid(steamid, 0)
-            return steamid
-        except:  # NOQA
-            await send(message, "输入的teamID不正确")
-            return None
 
 
 async def send(

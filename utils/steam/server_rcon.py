@@ -7,7 +7,7 @@ import socket
 from rcon.source import Client
 from rcon.source import rcon
 
-from config import RCON_PASSWORD, SERVER_LIST
+from config import RCON_PASSWORD, SERVER_LIST, CS2_SERVER
 from utils.configs.steam import STEAMID
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,9 @@ def send_rcon(address: tuple, command, *args, password=RCON_PASSWORD):
 async def send_rcon_async(address: tuple, command, *args, password=RCON_PASSWORD):
     ip, port = address
     try:
-        response = await rcon(command, *args, host=ip, port=port, passwd=password, timeout=2)
+        response = await rcon(
+            command, *args, host=ip, port=port, passwd=password, timeout=2
+        )
         return response
     except socket.timeout:
         logger.info(f"querying {address} timeout")
@@ -44,14 +46,36 @@ async def rcon_server_status(address: tuple, password=RCON_PASSWORD) -> dict or 
         return None
 
 
+async def rcon_cs2server_status(address: tuple, password=RCON_PASSWORD) -> dict or None:
+    response = await send_rcon_async(address, 'status', password=password)
+    if response:
+        status_data = parse_cs2server_status(response)
+        status_data['address'] = f"{address[0]}:{address[1]}"
+        return status_data
+    else:
+        return None
+
+
 async def rcon_servers_info(servers: list[tuple] = SERVER_LIST, password=RCON_PASSWORD):
     tasks = [rcon_server_status(server, password) for server in servers]
     responses = await asyncio.gather(*tasks)
     return responses
 
 
-async def rcon_all_servers(command, *args, servers: list[tuple] = SERVER_LIST, password=RCON_PASSWORD):
-    tasks = [send_rcon_async(server, command, *args, password=password) for server in servers]
+async def rcon_cs2servers_info(
+    servers: list[tuple] = CS2_SERVER, password=RCON_PASSWORD
+):
+    tasks = [rcon_cs2server_status(server, password) for server in servers]
+    responses = await asyncio.gather(*tasks)
+    return responses
+
+
+async def rcon_all_servers(
+    command, *args, servers: list[tuple] = SERVER_LIST, password=RCON_PASSWORD
+):
+    tasks = [
+        send_rcon_async(server, command, *args, password=password) for server in servers
+    ]
     responses = await asyncio.gather(*tasks)
     return responses
 
@@ -121,7 +145,7 @@ def parse_status_string(status_string) -> dict:
             'loss': connected.split()[2],
             'state': connected.split()[3],
             'rate': connected.split()[4],
-            'ip': connected.split()[5].split(':')[0]
+            'ip': connected.split()[5].split(':')[0],
         }
         for name, uniqueid, connected in player_data
     ]
@@ -129,6 +153,64 @@ def parse_status_string(status_string) -> dict:
     return result
 
 
+def parse_cs2server_status(status_string) -> dict:
+    result = {'max_players': 0}
+
+    match = re.search(r'hostname : (.+)', status_string)
+    if match:
+        result['server_name'] = match.group(1)
+
+    match = re.search(r'version {2}: (.+?)/', status_string)
+    if match:
+        result['version'] = match.group(1)
+
+    match = re.search(r'os/type {2}: (.+)', status_string)
+    if match:
+        result['os_type'] = match.group(1)
+
+    match = re.search(r'players {2}: (\d+) humans, (\d+) bots', status_string)
+    if match:
+        result['player_count'] = int(match.group(1))
+        result['bot_players'] = int(match.group(2))
+
+    match = re.search(r'udp/ip {3}: (.+)', status_string)
+    if match:
+        result['udp_ip'] = match.group(1)
+
+    match = re.search(
+        r'loaded spawngroup\( {2}1\) {2}: SV: {2}\[1: (.+?) \|', status_string
+    )
+    if match:
+        result['map'] = match.group(1)
+
+    status_lines = status_string.split('\n')
+    start_index = (
+        status_lines.index('  id     time ping loss      state   rate adr name') + 1
+    )
+    end_index = status_lines.index('#end')
+
+    player_data = status_lines[start_index:end_index]
+    result['players'] = [
+        {
+            'id': line.split()[0],
+            'duration': line.split()[1],
+            'ping': line.split()[2],
+            'loss': line.split()[3],
+            'state': line.split()[4],
+            'rate': line.split()[5],
+            'ip': line.split()[6].split(':')[0],
+            'name': ' '.join(line.split()[7:]),
+        }
+        for line in player_data
+    ]
+
+    return result
+
+
 if __name__ == '__main__':
-    task = rcon_all_servers('sm_whitelist_add', f'"{STEAMID}"')
-    print(asyncio.run(task))
+    # task = rcon_all_servers('sm_whitelist_add', f'"{STEAMID}"')
+    # print(asyncio.run(task))
+    data = send_rcon(CS2_SERVER[0], 'status')
+    print(data)
+    parsed_data = parse_cs2server_status(data)
+    print(parsed_data)

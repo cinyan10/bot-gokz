@@ -29,7 +29,8 @@ async def purity(message, params):
     kz_mode = rs["kz_mode"]
     logger.info(f"纯度查询: {steamid} {kz_mode}")
 
-    data = fetch_personal_purity(steamid, kz_mode, exclusive=False)
+    data1 = fetch_personal_purity(steamid, kz_mode, exclusive=False)
+    data2 = fetch_personal_purity(steamid, kz_mode, exclusive=True)
     try:
         playtime = get_mostactive_data(steamid)["total"]
         hours, minutes, seconds = seconds_to_hms(playtime)
@@ -39,18 +40,26 @@ async def purity(message, params):
     content = f"""
 =======纯度测试=======
 ID: {steamid}
-玩家名称:   {data["name"]}
+玩家名称:   {data1["name"]}
 游戏模式:   {kz_mode}
 游玩时间:   {hours}h {minutes}m {seconds}s
-----仅 AXE GOKZ API----
-总地图数:   {data["total"]}
-本服完成:   {data["count"]}
-百分比:   　{"{:.2%}".format(data["percentage"])}
+-----仅 AXE GOKZ API-----
+总地图数:   {data1["total"]}
+本服完成:   {data1["count"]}
+百分比:   　{"{:.2%}".format(data1["percentage"])}
 ------包含以前的API------
-总地图数:   {data["total"]}
-本服完成:   {data["count"]}
-百分比:　   {"{:.2%}".format(data["percentage"])}
+总地图数:   {data2["total"]}
+本服完成:   {data2["count"]}
+百分比:　   {"{:.2%}".format(data2["percentage"])}
 """
+
+    if (
+        data2["percentage"] >= 0.3
+        and data2['total'] >= 50
+        or data2["count"] >= 200
+        or hours >= 100
+    ):
+        content += '✅满足条件, 私信群主获取广州服IP'
 
     await send(message, content)
 
@@ -61,9 +70,8 @@ async def wr(message: GroupMessage, params=None):
         await send(message, "你地图名都不给我，我查什么WR\n (ノ—_—)ノ~┴————┴")
         return
 
-    try:
-        kz_mode = format_kzmode(params[1])
-    except Exception:
+    kz_mode = format_kzmode(params[1])
+    if kz_mode is None:
         kz_mode = get_user_info(message.author.member_openid)["kz_mode"]
 
     map_name = search_map(params[0])[0]

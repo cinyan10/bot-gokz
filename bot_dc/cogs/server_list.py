@@ -9,7 +9,7 @@ class ServerList(commands.Cog):
         self.bot = bot
         self.server_list_loop.start()
 
-    @tasks.loop(seconds=20)
+    @tasks.loop(seconds=60)
     async def server_list_loop(self):
         await self.bot.wait_until_ready()
 
@@ -17,8 +17,7 @@ class ServerList(commands.Cog):
         message = await get_or_create_message(channel, self.bot)
 
         embed = await servers_status_embed(
-            show_player_profile_link=True,
-            show_duration=True,
+            show_player_profile_link=True, show_duration=True, redirect=False
         )
         await message.edit(embed=embed)
 

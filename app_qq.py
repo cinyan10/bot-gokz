@@ -1,5 +1,3 @@
-import random
-
 import botpy
 from botpy import logging
 

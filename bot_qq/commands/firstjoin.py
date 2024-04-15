@@ -41,17 +41,17 @@ ISP:        {ip_data['isp']}
     await send(message, content)
 
 
-@Command("find")
+@Command("find", split_command=False)
 async def find(message, params):
-    steamids = find_player(params[0])
-    logger.info(f"正在执行 /find {steamids}")
+    logger.info(f"正在执行 /find {params}")
+    steamids = find_player(params)
 
     content = ""
     if steamids:
         for steamid in steamids:
             content += "===================\n"
             content += user_info_text(steamid)
-        await send(message, content=content)
+        await send(message, content=content, st=True)
     else:
         await send(message, "未找到该玩家")
 
@@ -82,7 +82,7 @@ async def whitelist(message: GroupMessage, params=None):
     #             await send(message, "❌ 白名单添加失败")
 
 
-@Command("info")
+@Command('info')
 async def info(message: GroupMessage, params):
     rs = await check_params(message, params)
     if not rs:

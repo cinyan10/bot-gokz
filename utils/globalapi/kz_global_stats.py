@@ -225,13 +225,12 @@ def fetch_personal_purity(steamid64, mode='kzt', exclusive=False) -> dict:
     steamid64 = convert_steamid(steamid64, 2)
     mode = format_kzmode(mode)
 
-    data = fetch_global_stats(steamid64, mode, True) + fetch_global_stats(steamid64, mode,False)
+    data = fetch_global_stats(steamid64, mode, True) + fetch_global_stats(steamid64, mode, False)
 
     if exclusive:
         count = sum(1 for item in data if item.get('server_id') in server_id)
     else:
         count = sum(1 for item in data if item.get('server_id') == server_id[0])
-
 
     return {
         'name': data[0]['player_name'],

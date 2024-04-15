@@ -6,7 +6,7 @@ from discord import Embed
 from utils.configs.web_urls import REDIR_URL
 from utils.globalapi.kz_maps import get_map_tier
 from utils.steam.server_a2s import aquery_server_status
-from utils.steam.server_rcon import rcon_all_servers, rcon_servers_info
+from utils.steam.server_rcon import rcon_servers_info
 from config import SERVER_LIST
 
 
@@ -19,10 +19,11 @@ async def query_server_markdown_line(address: tuple) -> str:
         return "🚫 **Timeout**\n"
 
     # server info
-    server_str = (f"[**{info.server_name}**]({REDIR_URL}{address[0]}:{address[1]}) | "
-                  f"{info.player_count}/{info.max_players} | "
-                  f"*{info.map_name}* ({map_tier})\n"
-                  )
+    server_str = (
+        f"[**{info.server_name}**]({REDIR_URL}{address[0]}:{address[1]}) | "
+        f"{info.player_count}/{info.max_players} | "
+        f"*{info.map_name}* ({map_tier})\n"
+    )
 
     # players
     players_str = ''
@@ -52,12 +53,18 @@ async def get_servers_status_embed():
     return Embed(
         title="SERVER LIST",
         description=content,
-        color=0x58b9ff,
+        color=0x58B9FF,
         timestamp=datetime.datetime.now(),
     )
 
 
-def format_server_status_markdown_line(status_data: dict, show_player_profile_link=False, show_duration=False) -> str:
+def format_server_status_markdown_line(
+    status_data: dict,
+    show_player_profile_link=False,
+    show_duration=False,
+    redirect=True,
+) -> str:
+
     if status_data is None:
         return "🚫 **Server Query Timeout**\n"
 
@@ -66,20 +73,30 @@ def format_server_status_markdown_line(status_data: dict, show_player_profile_li
 
     map_tier = get_map_tier(info['map'])
 
-    # server info
-    server_str = (f"[**{info['server_name']}**]({REDIR_URL}{info['address']}) | "
-                  f"{info['player_count']}/{info['max_players']} | "
-                  f"*{info['map']}* ({map_tier})\n"
-                  )
+    if redirect:
+        server_str = (
+            f"[**{info['server_name']}**]({REDIR_URL}{info['address']}) | "
+            f"{info['player_count']}/{info['max_players']} | "
+            f"*{info['map']}* ({map_tier})\n"
+        )
+    else:
+        server_str = (
+            f"[**{info['server_name']}**](https://www.axekz.com/) | "
+            f"{info['player_count']}/{info['max_players']} | "
+            f"*{info['map']}* ({map_tier})\n"
+        )
 
     # players
     players_str = ''
     if info['player_count'] > 0:
+        players_str += '> '
         for player in players:
             if show_player_profile_link:
                 if player['name'] == '':
                     players_str += '` ` '
-                players_str += f"[{player['name']}](https://kzgo.eu/players/{player['steamid']}) "
+                players_str += (
+                    f"[{player['name']}](https://kzgo.eu/players/{player['steamid']}) "
+                )
 
                 if show_duration:
                     players_str += f"- `{player['duration']}`  "
@@ -88,7 +105,9 @@ def format_server_status_markdown_line(status_data: dict, show_player_profile_li
                 if player['name'] == '':
                     players_str += '` ` '
                 if show_duration:
-                    players_str += f"`{player['name'].replace('`', '')} - {player['duration']}`  "
+                    players_str += (
+                        f"`{player['name'].replace('`', '')} - {player['duration']}`  "
+                    )
                 else:
                     players_str += f"`{player['name'].replace('`', '')}`  "
 
@@ -97,7 +116,9 @@ def format_server_status_markdown_line(status_data: dict, show_player_profile_li
     return server_str + players_str
 
 
-def format_server_status_general_line(status_data: dict, show_duration=False, show_empty_server=True) -> str:
+def format_server_status_general_line(
+    status_data: dict, show_duration=False, show_empty_server=True
+) -> str:
 
     if status_data is None:
         if show_empty_server:
@@ -124,7 +145,9 @@ def format_server_status_general_line(status_data: dict, show_duration=False, sh
             if player['name'] == '':
                 players_str += '`-` '
             if show_duration:
-                players_str += f"{player['name'].replace('`', '')} - {player['duration']}  "
+                players_str += (
+                    f"{player['name'].replace('`', '')} - {player['duration']}  "
+                )
             else:
                 players_str += f"{player['name'].replace('`', '')}  "
 
@@ -133,23 +156,32 @@ def format_server_status_general_line(status_data: dict, show_duration=False, sh
     return server_str + players_str
 
 
-async def servers_status_embed(show_player_profile_link=False, show_duration=False) -> Embed:
+async def servers_status_embed(
+    show_player_profile_link=False, show_duration=False, redirect=True
+) -> Embed:
     status_datas = await rcon_servers_info()
     content = ''
     for data in status_datas:
         content += format_server_status_markdown_line(
             data,
             show_player_profile_link=show_player_profile_link,
-            show_duration=show_duration
+            show_duration=show_duration,
+            redirect=redirect,
         )
 
     return Embed(
         title="SERVER LIST",
         description=content,
-        color=0x58b9ff,
+        color=0x58B9FF,
         timestamp=datetime.datetime.now(),
     )
 
 
 if __name__ == '__main__':
+    status_datas = asyncio.run(rcon_servers_info())
+    content = ''
+    for data in status_datas:
+        content += format_server_status_markdown_line(data)
+
+    print(content)
     pass

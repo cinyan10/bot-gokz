@@ -14,7 +14,7 @@ def find_player(name):
     if len(results) < 5:
         return [row[0] for row in results]
     else:
-        return []
+        return [row[0] for row in results[:5]]
 
 
 def get_mostactive_data(steamid) -> dict:
