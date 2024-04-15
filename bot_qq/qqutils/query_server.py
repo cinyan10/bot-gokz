@@ -2,11 +2,7 @@ import asyncio
 
 from bot_dc.dc_utils.query_server import format_server_status_general_line
 
-from utils.steam.server_rcon import (
-    rcon_servers_info,
-    rcon_cs2server_status,
-    rcon_cs2servers_info,
-)
+from utils.steam.server_rcon import rcon_servers_info
 
 
 async def servers_status_text(show_empty_server=True, show_duration=False) -> str:
@@ -16,15 +12,6 @@ async def servers_status_text(show_empty_server=True, show_duration=False) -> st
         content += format_server_status_general_line(
             data, show_empty_server=show_empty_server, show_duration=show_duration
         )
-
-    return content
-
-
-async def cs2server_status_text() -> str:
-    status_data = await rcon_cs2servers_info()
-    content = ''
-    for data in status_data:
-        content += format_server_status_general_line(data)
 
     return content
 

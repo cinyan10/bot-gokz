@@ -2,7 +2,7 @@ from botpy.message import GroupMessage
 
 from bot_qq.qqutils.ext import Command
 from bot_qq.qqutils.general import send
-from bot_qq.qqutils.query_server import servers_status_text, cs2server_status_text
+from bot_qq.qqutils.query_server import servers_status_text
 
 
 @Command('s')
@@ -10,7 +10,6 @@ async def server_status_simple(message: GroupMessage, params=None):
     content = await servers_status_text(False, False)
     if content == '':
         content = '暂时没有人在服务器里玩噢'
-    content += await cs2server_status_text()
 
     await send(message, content=content, st=True)
 
@@ -18,7 +17,6 @@ async def server_status_simple(message: GroupMessage, params=None):
 @Command('ls', 'list')
 async def server_status_list(message: GroupMessage, params=None):
     content = await servers_status_text(True, True)
-    content += await cs2server_status_text()
     await send(message, content=content, st=True)
 
 

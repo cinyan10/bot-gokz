@@ -62,14 +62,6 @@ async def rcon_servers_info(servers: list[tuple] = SERVER_LIST, password=RCON_PA
     return responses
 
 
-async def rcon_cs2servers_info(
-    servers: list[tuple] = CS2_SERVER, password=RCON_PASSWORD
-):
-    tasks = [rcon_cs2server_status(server, password) for server in servers]
-    responses = await asyncio.gather(*tasks)
-    return responses
-
-
 async def rcon_all_servers(
     command, *args, servers: list[tuple] = SERVER_LIST, password=RCON_PASSWORD
 ):
@@ -80,7 +72,7 @@ async def rcon_all_servers(
     return responses
 
 
-def parse_status_string(status_string) -> dict:
+def parse_csgoserver_string(status_string) -> dict:
     """
     This function parses a server status string from a Source engine game server (like CS:GO) and returns a dictionary with the following keys:
     - 'server_name': The name of the server.
@@ -199,12 +191,21 @@ def parse_cs2server_status(status_string) -> dict:
             'state': line.split()[4],
             'rate': line.split()[5],
             'ip': line.split()[6].split(':')[0],
-            'name': ' '.join(line.split()[7:]),
+            'name': line.split(None, 7)[-1].replace("'", ''),
+            'steamid': STEAMID,
         }
         for line in player_data
+        if line.split()[4] == 'active'
     ]
 
     return result
+
+
+def parse_status_string(status_string) -> dict:
+    if "----- Status -----" in status_string:
+        return parse_cs2server_status(status_string)
+    else:
+        return parse_csgoserver_string(status_string)
 
 
 if __name__ == '__main__':
