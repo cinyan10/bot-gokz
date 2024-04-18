@@ -38,8 +38,17 @@ async def kzttop(message: GroupMessage, params=None):
     rank = 0
     for data in top_datas:
         rank += 1
+        if rank == 1:
+            rank_display = '🥇'
+        elif rank == 2:
+            rank_display = '🥈'
+        elif rank == 3:
+            rank_display = '🥉'
+        else:
+            rank_display = str(rank)
+
         content += f"""
-{str(rank).ljust(22, '-')}
+{rank_display.ljust(22, '-')}
 {data['name']} | {data['rank_name']} | {"{:,}".format(data['points'])}pts 
 {data['steamid']}"""
 

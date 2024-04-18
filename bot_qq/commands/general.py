@@ -5,11 +5,12 @@ from botpy.message import GroupMessage
 
 from config import RESOURCE_URL
 from bot_qq.configs.text import HELP_DOCS, REPLIES
-from bot_qq.qqutils.database.users import update_steamid, set_kzmode, reset_steamid
+from bot_qq.qqutils.database.users import update_steamid, set_kzmode, reset_steamid, bind_bili_uid
+from utils.bilibili.bilibili import get_bili_user_info, format_bili_info
 from utils.globalapi.gokz import lj_color
 from utils.globalapi.kz_mode import format_kzmode
 from bot_qq.qqutils.ext import Command
-from bot_qq.qqutils.general import send, user_info_text
+from bot_qq.qqutils.general import send, user_info_text, send_img
 from utils.steam.steam_user import get_steam_user_info, convert_steamid
 
 
@@ -25,6 +26,22 @@ async def test(message: GroupMessage, params):
 
 @Command('绑定', 'bind')
 async def bind(message, params):
+
+    if params[0] in ['bili', 'bilibili', '哔哩哔哩']:
+        uid = params[1]
+        data = await get_bili_user_info(uid)
+        if data is None:
+            await send(message, '无法获取到用户信息, 请检查你的UID格式是否正确')
+            return
+        # 更新数据库
+        if bind_bili_uid(message.author.member_openid, uid):
+            await send(message, f"绑定成功\n{format_bili_info(data)}")
+            await send_img(message, data['face'], use_fastdl=False)
+        else:
+            await send(message, "绑定失败")
+
+        return
+
     if not params:
         await send(message, '请输入steamid或主页链接噢')
         return

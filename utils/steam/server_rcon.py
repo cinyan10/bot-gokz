@@ -34,6 +34,8 @@ async def send_rcon_async(address: tuple, command, *args, password=RCON_PASSWORD
     except socket.timeout:
         logger.info(f"querying {address} timeout")
         return None
+    except ConnectionRefusedError:
+        return None
 
 
 async def rcon_server_status(address: tuple, password=RCON_PASSWORD) -> dict or None:

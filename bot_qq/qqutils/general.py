@@ -111,9 +111,9 @@ async def send(
 
 
 async def send_img(
-    message: GroupMessage, url: str, msg_seq=2, fastdl=True, debug=False
+    message: GroupMessage, url: str, msg_seq=2, use_fastdl=True, debug=False
 ) -> None:
-    if fastdl:
+    if use_fastdl:
         file_url = RESOURCE_URL + "images/" + url  # 这里需要填写上传的资源Url
     else:
         file_url = url

@@ -60,7 +60,7 @@ async def lj_duel(message: GroupMessage, params=None):
     pts = pts if pts else 0
 
     if pts < bet_points:
-        return await send(message, "积分不足, 无法决斗")
+        return await send(message, f"积分不足, 无法决斗。当前积分: {pts}")
 
     if d.message1 is None:
         d.message1 = message

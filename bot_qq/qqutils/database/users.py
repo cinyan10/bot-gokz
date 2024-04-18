@@ -79,3 +79,14 @@ def get_total_points(member_openid):
     if rs:
         return rs["points"]
     return 0
+
+
+def bind_bili_uid(member_openid, bili_uid):
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE bot_qq.users SET bili_uid = %s WHERE member_openid = %s",
+                (bili_uid, member_openid),
+            )
+            conn.commit()
+            return cursor.rowcount > 0

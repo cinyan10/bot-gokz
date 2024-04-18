@@ -136,7 +136,7 @@ def format_server_status_general_line(
     map_tier = get_map_tier(info['map'])
 
     # server info
-    server_str = f"{info['server_name']} | {info['player_count']}/{info['max_players']} | {info['map']} ({map_tier})\n"
+    server_str = f"{info['server_name']} ({info['player_count']}/{info['max_players']}) | {info['map']} ({map_tier})\n"
 
     # players
     players_str = ''
