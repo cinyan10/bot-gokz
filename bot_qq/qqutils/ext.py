@@ -6,6 +6,7 @@ class Command:
     """
     指令装饰器
     """
+
     command_handlers = []
 
     def __init__(self, *args, split_command=True):
@@ -29,8 +30,10 @@ class Command:
                         return await func(*args, **kwargs)
 
                     if content_lower.startswith(prefix + command + ' '):
-                        params = content_lower[len(prefix + command):].strip()
-                        kwargs["params"] = params.split() if self.split_command else params
+                        params = content_lower[len(prefix + command) :].strip()
+                        kwargs["params"] = (
+                            params.split() if self.split_command else params
+                        )
                         return await func(*args, **kwargs)
 
             return False

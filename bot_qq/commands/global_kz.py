@@ -1,5 +1,7 @@
-from botpy.message import GroupMessage
+from textwrap import dedent
 
+from botpy.message import GroupMessage
+from aiohttp.client_exceptions import ClientResponseError
 
 from utils.configs.gokz import MAP_TIERS
 from utils.database.firstjoin import get_mostactive_data
@@ -14,12 +16,107 @@ from utils.globalapi.kz_global_stats import (
     KzGlobalStats,
 )
 from utils.globalapi.kz_mode import format_kzmode, globalapi_check, format_kzmode_simple
+from utils.misc.aiohttp import aiohttp_get
 from utils.misc.misc import format_seconds_to_time, record_format_time, seconds_to_hms
 from utils.steam.steam import convert_steamid
 from utils.steam.steam_user import get_steam_avatar_localfile_url
 from bot_qq.qqutils.ext import Command
-from bot_qq.qqutils.general import check_params, send, search_map, send_img, send_voice
+from bot_qq.qqutils.general import (
+    check_params,
+    send,
+    search_map,
+    send_img,
+    send_voice,
+    send_chart,
+)
 from botpy import logger
+
+
+BASE_URL = 'http://47.238.188.6:8000'
+
+
+@Command('stats')
+async def personal_stats(message, params):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    query_url = f"{BASE_URL}/statistics/?steamid={steamid}"
+    data = await aiohttp_get(query_url)
+
+    content = dedent(
+        f"""
+        玩家名: {data['oldest_record']['player_name']}
+        SteamID: {data['oldest_record']['steam_id']}
+        =======================
+        总记录数: {data['total_records']}
+        总时间: {format_seconds_to_time(data['total_time'])}
+        总TP数: {data['total_teleports']}
+        总地图数: {data['total_maps']}
+        平均时间: {format_seconds_to_time(data['avg_time'])}
+        =======================
+        游玩次数最多的地图: {data['most_played_map']} ({data['most_played_map_times']}次)
+        游玩最长时间的地图: {data['most_played_time_map']} ({format_seconds_to_time(data['most_played_time_map_time'])})
+        最长磨图时间: {format_seconds_to_time(data['max_map_time'])}
+        =====最常玩的服务器=====: 
+        {data['most_played_server']} {data['most_played_server_times']} 次，占比 {data['most_played_server_percentage']:.2f}%
+        =====入坑时间=====
+        地图名: {data['oldest_record']['map_name']}
+        时间: {format_seconds_to_time(data['oldest_record']['time'])}
+        传送次数: {data['oldest_record']['teleports']}
+        服务器名: {data['oldest_record']['server_name']}
+        创建时间: {data['oldest_record']['created_on']}
+        """
+    )
+
+    await send(message, content)
+
+
+@Command('calendar', '日历图')
+async def player_heatmap(message, params):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    query_url = f"http://47.238.188.6:8000/charts/url/{steamid}/calendar"
+
+    try:
+        await send_chart(message, query_url)
+    except Exception as e:
+        await send(message, repr(e))
+
+
+@Command('radar', '雷达')
+async def player_radar_pie_chart(message, params):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    query_url = f"http://47.238.188.6:8000/charts/url/{steamid}/radar"
+
+    try:
+        await send_chart(message, query_url)
+    except ClientResponseError as e:
+        await send(message, "gokz.cn未找到该玩家")
+
+
+@Command('cdt')
+async def player_purity_graph(message, params):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    query_url = f"http://47.238.188.6:8000/charts/url/{steamid}/purity"
+    await send_chart(message, query_url)
+
+
+@Command('pd')
+async def player_data(message, params):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    kz_mode = rs["kz_mode"]
+    query_url = f"http://47.238.188.6:8000/charts/url/{steamid}/points?mode={kz_mode}"
+    await send_chart(message, query_url)
+
+
+@Command('td')
+async def player_time_graph(message, params):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    query_url = f"http://47.238.188.6:8000/charts/url/{steamid}/playtime"
+    await send_chart(message, query_url)
 
 
 @Command('纯度', 'purity')
@@ -61,6 +158,21 @@ ID: {steamid}
     ):
         content += '✅满足条件, 私信群主获取广州服IP'
 
+    await send(message, content)
+
+
+@Command("提纯")
+async def ti_purity(message, params=None):
+    rs = await check_params(message, params)
+    steamid = rs["steamid"]
+    kz_mode = rs["kz_mode"]
+
+    limit = 20
+
+    maps = fetch_personal_purity(steamid, kz_mode, exclusive=False)['maps']
+
+    content = "可提纯地图:\n"
+    content += "\n".join(maps[:limit])
     await send(message, content)
 
 
@@ -121,6 +233,7 @@ async def wr(message: GroupMessage, params=None):
 @Command("pr")
 async def pr(message: GroupMessage, params):
     rs = await check_params(message, params)
+    logger.info(f"pr: {rs}")
     if not rs:
         return
 
@@ -129,25 +242,27 @@ async def pr(message: GroupMessage, params):
 
     data = fetch_personal_recent(steamid, kz_mode)
 
-    content = f"""
-╔ 地图:　　{data['map_name']}
-║ 难度:　　T{MAP_TIERS[data['map_name']]}
-║ 模式:　　{kz_mode}
-║ 玩家:　　{data['player_name']} 
-║ 用时:　　{format_seconds_to_time(data['time'])}
-║ 存点数:　{data['teleports']}
-║ 分数:　　{data['points']}
-║ 服务器:　{data['server_name']}
-╚ {record_format_time(data['created_on'])} ═══"""
+    content = dedent(
+        f"""
+        ╔ 地图:　　{data['map_name']}
+        ║ 难度:　　T{MAP_TIERS[data['map_name']]}
+        ║ 模式:　　{kz_mode}
+        ║ 玩家:　　{data['player_name']} 
+        ║ 用时:　　{format_seconds_to_time(data['time'])}
+        ║ 存点数:　{data['teleports']}
+        ║ 分数:　　{data['points']}
+        ║ 服务器:　{data['server_name']}
+        ╚ {record_format_time(data['created_on'])} ═══”"""
+    )
 
+    await send(message, content)
     try:
-        await send_img(message, url="maps/" + data["map_name"] + ".jpg", msg_seq=1)
-    except:  # NOQA
-        pass
-    await send(message, content, msg_seq=2)
+        await send_img(message, url="maps/" + data["map_name"] + ".jpg")
+    except Exception as e:
+        logger.info(repr(e))
 
 
-@Command("pb")
+@Command('pb')
 async def pb(message, params):
     rs = await check_params(message, params)
     if not rs:
@@ -155,14 +270,15 @@ async def pb(message, params):
 
     steamid = rs["steamid"]
     kz_mode = rs["kz_mode"]
-    map_name = rs["others"][0]
+    try:
+        map_name = rs["others"][0]
+    except IndexError:
+        return await send(message, "(￣^￣) 你地图名都不给我，我查什么PB")
 
-    if map_name == "":
-        await send(message, "你地图名都不给我，我查什么PB\n(￣^￣)")
-        return
     map_name = search_map(map_name)[0]
 
-    content = f"""╔ 地图:　{map_name}
+    content = f"""
+╔ 地图:　{map_name}
 ║ 难度:　T{MAP_TIERS[map_name]}
 ║ 模式:　{kz_mode}
 ╠═════存点记录═════"""

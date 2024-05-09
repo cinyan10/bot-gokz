@@ -128,6 +128,7 @@ def get_stats_embed(steamid64, kzmode):
 
 
 def fetch_global_stats(steamid64, mode_str, has_tp=True) -> list:
+    steamid64 = convert_steamid(steamid64, 64)
     api_url = (f"{GLOBAL_API_URL}api/v2.0/records/top?&steamid64={steamid64}&tickrate=128&"
                f"stage=0&modes_list_string={mode_str}&limit=10000&has_teleports={has_tp}")
     response = requests.get(api_url)
@@ -227,6 +228,8 @@ def fetch_personal_purity(steamid64, mode='kzt', exclusive=False) -> dict:
 
     data = fetch_global_stats(steamid64, mode, True) + fetch_global_stats(steamid64, mode, False)
 
+    maps = [f"{record['map_name']} {'TP' if record['teleports'] else "PRO"}" for record in data if record['server_id'] != 1683]
+
     if exclusive:
         count = sum(1 for item in data if item.get('server_id') in server_id)
     else:
@@ -237,7 +240,8 @@ def fetch_personal_purity(steamid64, mode='kzt', exclusive=False) -> dict:
         'steamid64': steamid64,
         'count': count,
         'total': len(data),
-        'percentage':  count / len(data)
+        'percentage':  count / len(data),
+        'maps': maps,
     }
 
 

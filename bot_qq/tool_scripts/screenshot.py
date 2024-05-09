@@ -12,14 +12,10 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from selenium.webdriver.support.wait import WebDriverWait
 
-from config import RESOURCE_URL
+from config import RESOURCE_URL, LOCAL_PATH
 from utils.file_operation.file_operation import check_last_modified_date
 from utils.globalapi.kz_mode import format_kzmode_simple
 from utils.steam.steam import convert_steamid
-
-LOCAL_PATH = "/www/wwwroot/fastdl.axekz.com/images/"
-
-LOCAL_AUDIO_PATH = "/www/wwwroot/fastdl.axekz.com/audio/"
 
 executor = ThreadPoolExecutor(max_workers=5)
 
@@ -55,7 +51,6 @@ def kzgoeu_screenshot(steamid, kz_mode, force_update=False):
     # Check last modified date of the file
     filepath = os.path.join(LOCAL_PATH, image_url)
     last_modified_date = check_last_modified_date(filepath)
-
     if not force_update:
         if last_modified_date and (
             datetime.now() - last_modified_date <= timedelta(days=1)
@@ -63,15 +58,11 @@ def kzgoeu_screenshot(steamid, kz_mode, force_update=False):
             # If file modified within 1 day, return URL directly
             return image_url
 
-    # 使用Selenium打开浏览器
-    options = webdriver.FirefoxOptions()
-    options.add_argument("--headless")  # 无头模式，无需图形界面
-    options.add_argument("--lang=zh_CN")
-    options.add_argument('--font-family="WenQuanYi Zen Hei"')
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Run Chrome in headless mode
+    options.add_argument("--no-sandbox")  # Bypass OS security model
 
-    driver = webdriver.Firefox(
-        options=options
-    )  # 使用Firefox浏览器，无需安装额外驱动程序
+    driver = webdriver.Chrome(options=options)
 
     # 打开网页
     kzgo_url = f"https://kzgo.eu/players/{steamid}?{kz_mode}"
@@ -116,10 +107,9 @@ def kzgoeu_compare_screenshot(steamid1, steamid2, kz_mode):
     url = f"kzgo/{steamid1}vs{steamid2}_{kz_mode}.png"
 
     # 使用Selenium打开浏览器
-    options = webdriver.FirefoxOptions()
-    options.add_argument("--headless")  # 无头模式，无需图形界面
-    options.add_argument("--lang=zh_CN")
-    options.add_argument('--font-family="WenQuanYi Zen Hei"')
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Run Chrome in headless mode
+    options.add_argument("--no-sandbox")  # Bypass OS security model
 
     filepath = os.path.join(LOCAL_PATH, url)
     last_modified_date = check_last_modified_date(filepath)
@@ -129,9 +119,7 @@ def kzgoeu_compare_screenshot(steamid1, steamid2, kz_mode):
     ):
         return url
 
-    driver = webdriver.Firefox(
-        options=options
-    )  # 使用Firefox浏览器，无需安装额外驱动程序
+    driver = webdriver.Chrome(options=options)
 
     # 打开网页
     kzgo_compare_url = (
@@ -218,12 +206,11 @@ def vnl_screenshot(steamid):
         return image_url
 
     # 使用Selenium打开浏览器
-    options = webdriver.FirefoxOptions()
-    options.add_argument("--headless")  # 无头模式，无需图形界面
-    options.add_argument("--lang=zh_CN")
-    options.add_argument('--font-family="WenQuanYi Zen Hei"')
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Run Chrome in headless mode
+    options.add_argument("--no-sandbox")  # Bypass OS security model
 
-    driver = webdriver.Firefox(options=options)
+    driver = webdriver.Chrome(options=options)
 
     kzgo_url = f"https://vnl.kz/#/stats/{steamid64}"
     driver.get(kzgo_url)

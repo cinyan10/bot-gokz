@@ -1,9 +1,10 @@
 from botpy.message import GroupMessage
 
 from bot_qq.qqutils.ext import Command
-from bot_qq.qqutils.general import send
+from bot_qq.qqutils.general import send, send_img
 from bot_qq.qqutils.query_server import servers_status_text
 from bot_qq.qqutils.text import borders, server_content_borders
+from bot_qq.tool_scripts.server_info import take_screenshot
 
 
 @Command('s')
@@ -21,6 +22,12 @@ async def server_status_list(message: GroupMessage, params=None):
     content = await servers_status_text(True, True)
     content = server_content_borders(content)
     await send(message, content=content, st=True)
+
+
+@Command('si')
+async def server_status_image(message, params=None):
+    url = await take_screenshot()
+    await send_img(message, url)
 
 
 @Command('yd')

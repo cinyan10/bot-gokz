@@ -1,27 +1,14 @@
-import asyncio
 import logging
-
+import asyncio
 import re
 import socket
 
-from rcon.source import Client
 from rcon.source import rcon
 
-from config import RCON_PASSWORD, SERVER_LIST, CS2_SERVER
+from config import RCON_PASSWORD, SERVER_LIST
 from utils.configs.steam import STEAMID
 
 logger = logging.getLogger(__name__)
-
-
-def send_rcon(address: tuple, command, *args, password=RCON_PASSWORD):
-    ip, port = address
-    try:
-        with Client(ip, port, passwd=password, timeout=2.0) as client:
-            response = client.run(command, *args)
-            return response
-    except socket.timeout:
-        logger.info(f"sync rcon querying {address} timeout")
-        return None
 
 
 async def send_rcon_async(address: tuple, command, *args, password=RCON_PASSWORD):
@@ -35,6 +22,21 @@ async def send_rcon_async(address: tuple, command, *args, password=RCON_PASSWORD
         logger.info(f"querying {address} timeout")
         return None
     except ConnectionRefusedError:
+        return None
+    except UnicodeDecodeError:
+        # Try to decode the response with 'ISO-8859-1' encoding
+        response = await rcon(
+            command,
+            *args,
+            host=ip,
+            port=port,
+            passwd=password,
+            timeout=2,
+            encoding='ISO-8859-1',
+        )
+        return response
+    except Exception as e:
+        logger.error(f"Error querying {address}: {e}")
         return None
 
 
@@ -148,7 +150,7 @@ def parse_csgoserver_string(status_string) -> dict:
 
 
 def parse_cs2server_status(status_string) -> dict:
-    result = {'max_players': 0}
+    result = {'max_players': 16}
 
     match = re.search(r'hostname : (.+)', status_string)
     if match:
@@ -211,9 +213,4 @@ def parse_status_string(status_string) -> dict:
 
 
 if __name__ == '__main__':
-    # task = rcon_all_servers('sm_whitelist_add', f'"{STEAMID}"')
-    # print(asyncio.run(task))
-    data = send_rcon(CS2_SERVER[0], 'status')
-    print(data)
-    parsed_data = parse_cs2server_status(data)
-    print(parsed_data)
+    pass

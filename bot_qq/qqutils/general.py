@@ -1,14 +1,32 @@
 import steam.steamid
+from botpy import logger
 from botpy.message import GroupMessage
 import difflib
 
 from utils.database.firstjoin import get_mostactive_data, get_firstjoin_data
 from bot_qq.qqutils.database.users import get_user_info
 from utils.globalapi.kz_mode import format_kzmode
+from utils.misc.aiohttp import aiohttp_get
 from utils.misc.misc import format_string_to_datetime, seconds_to_hms
 from utils.steam.steam import convert_steamid
 from config import RESOURCE_URL
 from utils.configs.gokz import MAP_TIERS
+
+
+async def send_chart(message: GroupMessage, query_url: str, msg_seq=2) -> None:
+    data = await aiohttp_get(query_url, timeout=30)
+    try:
+        img_url = data["url"]
+    except Exception as e:
+        logger.error(repr(e))
+        await send(message, repr(e))
+        return
+
+    try:
+        await send_img(message, url=img_url, use_fastdl=False)
+    except Exception as e:
+        logger.error(repr(e))
+        await send(message, repr(e), msg_seq=2)
 
 
 def search_map(map_name, threshold=0.2) -> list:
@@ -119,7 +137,7 @@ async def send_img(
         file_url = url
 
     if debug:
-        print(file_url)
+        print(f"url:{file_url}")
 
     uploadMedia = await message._api.post_group_file(  # NOQA
         group_openid=message.group_openid,
@@ -127,7 +145,8 @@ async def send_img(
         url=file_url,  # 文件Url
     )
 
-    # 资源上传后，会得到Media，用于发送消息
+    if debug:
+        print(uploadMedia)
     await message._api.post_group_message(  # NOQA
         group_openid=message.group_openid,
         msg_type=7,  # 7表示富媒体类型

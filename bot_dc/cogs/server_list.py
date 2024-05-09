@@ -17,7 +17,7 @@ class ServerList(commands.Cog):
         message = await get_or_create_message(channel, self.bot)
 
         embed = await servers_status_embed(
-            show_player_profile_link=True, show_duration=True, redirect=False
+            show_player_profile_link=False, show_duration=False, redirect=True
         )
         await message.edit(embed=embed)
 

@@ -10,7 +10,7 @@ from bot_qq.qqutils.database.users import get_total_points, update_points
 from bot_qq.qqutils.ext import Command
 from bot_qq.qqutils.general import send, send_voice, send_img
 from bot_qq.qqutils.misc import execute_python_code
-from bot_qq.tool_scripts.screenshot import LOCAL_PATH, LOCAL_AUDIO_PATH
+from config import LOCAL_PATH, LOCAL_AUDIO_PATH
 from utils.database.firstjoin import get_recent_players
 from utils.file_operation.file_operation import list_files
 

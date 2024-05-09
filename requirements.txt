@@ -19,3 +19,4 @@ steam~=1.4.4
 selenium~=4.19.0
 pillow~=10.3.0
 rsp~=1.0.1
+bilibili-api-python~=16.2.0

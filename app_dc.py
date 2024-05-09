@@ -9,7 +9,7 @@ from config import DISCORD_TOKEN
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
-discord.utils.setup_logging()
+discord.utils.setup_logging(level=1)
 
 
 async def load():
@@ -24,4 +24,5 @@ async def main():
     await bot.start(DISCORD_TOKEN)
 
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())

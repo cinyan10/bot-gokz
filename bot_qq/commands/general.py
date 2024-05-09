@@ -2,6 +2,8 @@ import random
 
 import steam.steamid
 from botpy.message import GroupMessage
+from botpy.types.inline import Button, RenderData, Action, Permission, KeyboardRow, Keyboard
+from botpy.types.message import MessageMarkdownParams, MarkdownPayload, Ark, ArkKv, KeyboardPayload, Embed, EmbedField
 
 from config import RESOURCE_URL
 from bot_qq.configs.text import HELP_DOCS, REPLIES
@@ -21,7 +23,30 @@ async def send_help_info(message: GroupMessage, params=None):
 
 @Command("test", split_command=False)
 async def test(message: GroupMessage, params):
-    await send(message, "参数 " + str(params))
+    """
+    param st: 是否在消息前加换行符
+    """
+    await send_img(message, 'blob:http://47.238.188.6:8000/abd8f98b-5123-46d0-b5e2-beeea642e53d', use_fastdl=False)
+
+
+def build_a_demo_keyboard() -> Keyboard:
+    """
+    创建一个只有一行且该行只有一个 button 的键盘
+    """
+    button1 = Button(
+        id="1",
+        render_data=RenderData(label="button", visited_label="BUTTON", style=0),
+        action=Action(
+            type=2,
+            permission=Permission(type=2, specify_role_ids=["1"], specify_user_ids=["1"]),
+            click_limit=10,
+            data="/搜索",
+            at_bot_show_channel_list=True,
+        ),
+    )
+
+    row1 = KeyboardRow(buttons=[button1])
+    return Keyboard(rows=[row1])
 
 
 @Command('绑定', 'bind')
